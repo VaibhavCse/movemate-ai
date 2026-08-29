@@ -1,0 +1,819 @@
+# MoveMate AI - API Contract
+
+Version: 1.0
+
+Status: Approved
+
+---
+
+# Purpose
+
+This document defines the communication contract between the frontend and backend of MoveMate AI.
+
+The frontend should never know about:
+
+- Gemini
+- LangChain
+- Tavily
+- Prompt Engineering
+- AI Orchestration
+
+The frontend only communicates with the backend through well-defined APIs.
+
+The backend is responsible for conversation management, business logic, tool orchestration, AI reasoning, and response generation.
+
+---
+
+# API Design Principles
+
+Every API should follow these principles:
+
+- Single Responsibility
+- Predictable Response Structure
+- Provider Independent
+- Easy to Extend
+- Easy to Version
+- Frontend Friendly
+- Structured JSON Responses
+- Never expose AI provider responses directly
+
+---
+
+# Version 1 APIs
+
+Only one endpoint is required.
+
+```
+POST /chat
+```
+
+Every conversation with Shelby goes through this endpoint.
+
+Future endpoints can be added without changing this contract.
+
+---
+
+# Request Structure
+
+```json
+{
+  "sessionId": "7d4d6b4d-a91d-4e8b-83a2-a9fcb4d03c57",
+  "message": "Need a flat near Bellandur under 25k",
+  "attachments": [],
+  "timestamp": "2026-07-21T12:00:00Z"
+}
+```
+
+---
+
+# Request Fields
+
+## sessionId
+
+Unique identifier for the current conversation.
+
+Purpose
+
+- Session Memory
+- Conversation Tracking
+- Conversation Recovery
+- Analytics
+
+---
+
+## message
+
+Natural language input from the user.
+
+Examples
+
+```
+Need a flat
+```
+
+```
+Budget is 25k
+```
+
+```
+My office is in Bellandur
+```
+
+---
+
+## attachments
+
+Reserved for future versions.
+
+Version 1
+
+```
+[]
+```
+
+Future support
+
+- Images
+- Voice Notes
+- Documents
+
+---
+
+## timestamp
+
+Client-generated timestamp.
+
+Useful for
+
+- Analytics
+- Logging
+- Debugging
+
+---
+
+# Standard Response Envelope
+
+Every backend response must follow the same structure.
+
+```json
+{
+  "success": true,
+  "type": "...",
+  "data": {},
+  "metadata": {}
+}
+```
+
+This ensures consistency across every response type.
+
+---
+
+# Response Fields
+
+## success
+
+Boolean indicating whether the request was processed successfully.
+
+Example
+
+```json
+true
+```
+
+---
+
+## type
+
+Determines how the frontend should render the response.
+
+Supported values
+
+- question
+- recommendation
+- error
+
+Future values may include
+
+- greeting
+- clarification
+- loading
+- onboarding
+
+---
+
+## data
+
+Contains the actual payload.
+
+The structure depends on the response type.
+
+---
+
+## metadata
+
+Contains additional information for:
+
+- Debugging
+- Analytics
+- Performance
+- Future UI Features
+- Logging
+
+The frontend may ignore metadata if it isn't needed.
+
+---
+
+# Metadata Structure
+
+```json
+{
+  "metadata": {
+    "sessionId": "uuid",
+    "currentState": "collecting_budget",
+    "progress": 33,
+    "cached": false,
+    "usedTools": [
+      "memory_manager"
+    ],
+    "processingTimeMs": 182
+  }
+}
+```
+
+---
+
+# Metadata Fields
+
+## sessionId
+
+Current conversation session.
+
+---
+
+## currentState
+
+Current state of the conversation.
+
+Examples
+
+```
+start
+```
+
+```
+collecting_city
+```
+
+```
+collecting_budget
+```
+
+```
+collecting_area
+```
+
+```
+searching
+```
+
+```
+reasoning
+```
+
+```
+recommendation_ready
+```
+
+---
+
+## progress
+
+Percentage of required information collected.
+
+Example
+
+```
+0
+```
+
+Conversation started.
+
+```
+33
+```
+
+City collected.
+
+```
+66
+```
+
+Budget collected.
+
+```
+100
+```
+
+Ready to search.
+
+---
+
+## cached
+
+Indicates whether cached results were returned.
+
+```
+true
+```
+
+or
+
+```
+false
+```
+
+---
+
+## usedTools
+
+List of backend tools involved.
+
+Examples
+
+```
+[]
+```
+
+```
+[
+    "memory_manager"
+]
+```
+
+```
+[
+    "tavily",
+    "gemini"
+]
+```
+
+---
+
+## processingTimeMs
+
+Total backend processing time.
+
+Example
+
+```
+184
+```
+
+(milliseconds)
+
+---
+
+# Response Types
+
+Version 1 supports three response types.
+
+- question
+- recommendation
+- error
+
+---
+
+# Type 1
+
+Question Response
+
+Used when Shelby requires more information.
+
+Example
+
+```json
+{
+  "success": true,
+  "type": "question",
+  "data": {
+    "message": "What's your monthly budget?",
+    "missingField": "budget"
+  },
+  "metadata": {
+    "currentState": "collecting_budget",
+    "progress": 33
+  }
+}
+```
+
+---
+
+# Question Object
+
+```json
+{
+  "message": "",
+  "missingField": ""
+}
+```
+
+Supported missing fields
+
+- city
+- budget
+- area
+- officeLocation
+
+---
+
+# Type 2
+
+Recommendation Response
+
+Used after Shelby has enough information.
+
+Example
+
+```json
+{
+  "success": true,
+  "type": "recommendation",
+  "data": {
+    "report": {
+      "summary": "...",
+      "confidence": 92,
+      "properties": [],
+      "nearbyAreas": [],
+      "nextSuggestion": ""
+    }
+  },
+  "metadata": {
+    "progress": 100,
+    "cached": false,
+    "usedTools": [
+      "tavily",
+      "gemini"
+    ]
+  }
+}
+```
+
+---
+
+# Recommendation Report
+
+```json
+{
+  "summary": "",
+  "confidence": 0,
+  "properties": [],
+  "nearbyAreas": [],
+  "nextSuggestion": ""
+}
+```
+
+---
+
+# Recommendation Fields
+
+## summary
+
+Human-readable explanation generated by Shelby.
+
+---
+
+## confidence
+
+Confidence score between
+
+```
+0-100
+```
+
+Purpose
+
+Help users understand recommendation quality.
+
+Example
+
+95
+
+Excellent recommendation.
+
+75
+
+Good recommendation.
+
+50
+
+Limited options available.
+
+---
+
+## properties
+
+List of recommended properties.
+
+---
+
+## nearbyAreas
+
+Alternative nearby locations when results are limited.
+
+Examples
+
+- HSR Layout
+- BTM Layout
+- Sarjapur Road
+
+---
+
+## nextSuggestion
+
+Actionable advice.
+
+Example
+
+```
+Increase your budget by ₹3k for significantly better options.
+```
+
+---
+
+# Property Object
+
+Every property returned should follow the same schema.
+
+```json
+{
+  "title": "",
+  "area": "",
+  "rent": 0,
+  "matchScore": 0,
+  "pros": [],
+  "cons": [],
+  "nearby": {
+    "metro": "",
+    "gym": "",
+    "hospital": "",
+    "grocery": ""
+  },
+  "listingUrl": ""
+}
+```
+
+---
+
+# Property Fields
+
+## title
+
+Property name.
+
+---
+
+## area
+
+Location.
+
+---
+
+## rent
+
+Monthly rent.
+
+---
+
+## matchScore
+
+Percentage match based on user preferences.
+
+Range
+
+```
+0-100
+```
+
+---
+
+## pros
+
+List of strengths.
+
+Example
+
+```
+Near Metro
+
+Gated Society
+
+Covered Parking
+```
+
+---
+
+## cons
+
+Known trade-offs.
+
+Example
+
+```
+Higher Rent
+
+Limited Parking
+
+Heavy Traffic
+```
+
+---
+
+## nearby
+
+Important nearby facilities.
+
+Includes
+
+- Metro
+- Gym
+- Hospital
+- Grocery
+
+---
+
+## listingUrl
+
+Original listing link.
+
+---
+
+# Type 3
+
+Error Response
+
+Example
+
+```json
+{
+  "success": false,
+  "type": "error",
+  "data": {
+    "message": "I'm having trouble comparing listings right now. Please try again in a few moments."
+  },
+  "metadata": {}
+}
+```
+
+Users should never see
+
+- Stack traces
+- HTTP errors
+- Gemini errors
+- Tavily errors
+- Timeout messages
+
+Shelby should always respond naturally.
+
+---
+
+# HTTP Status Codes
+
+## 200
+
+Successful request.
+
+---
+
+## 400
+
+Invalid request.
+
+---
+
+## 429
+
+Rate limited.
+
+---
+
+## 500
+
+Unexpected backend error.
+
+The frontend should always convert technical errors into friendly UI messages.
+
+---
+
+# Session Flow
+
+Frontend creates Session ID
+
+↓
+
+Every request includes Session ID
+
+↓
+
+Backend loads session memory
+
+↓
+
+Conversation Manager updates memory
+
+↓
+
+State Detector validates information
+
+↓
+
+Decision Engine determines next action
+
+↓
+
+Backend returns structured response
+
+---
+
+# Future Attachment Support
+
+## Image
+
+```json
+{
+  "attachments": [
+    {
+      "type": "image",
+      "url": ""
+    }
+  ]
+}
+```
+
+---
+
+## Voice
+
+```json
+{
+  "attachments": [
+    {
+      "type": "audio",
+      "url": ""
+    }
+  ]
+}
+```
+
+---
+
+# Future APIs
+
+These APIs are planned but not required for Version 1.
+
+```
+POST /voice
+```
+
+```
+POST /image
+```
+
+```
+GET /health
+```
+
+```
+GET /session
+```
+
+```
+DELETE /session
+```
+
+---
+
+# Backend Responsibilities
+
+The frontend only sends
+
+- Session ID
+- User Message
+- Attachments
+
+The backend decides
+
+- What information is missing
+- Whether enough information has been collected
+- Whether to search
+- Whether to use cached data
+- Whether Tavily should be called
+- Whether Gemini should be called
+- How recommendations are generated
+
+Business logic should never exist in the frontend.
+
+---
+
+# Response Philosophy
+
+The backend returns structured data.
+
+The frontend renders UI components.
+
+The frontend should never parse AI-generated paragraphs to determine application behavior.
+
+---
+
+# Version 1 Goal
+
+Build a clean, stable, and extensible API contract that allows MoveMate AI to evolve without breaking frontend integrations.
+
+One endpoint.
+
+One response format.
+
+One source of truth.
+
+---
+
+End of Document

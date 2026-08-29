@@ -1,0 +1,12 @@
+{
+  "success": true,
+  "type": "question",
+  "data": {
+    "message": "Which area are you looking for?",
+    "missingField": "area"
+  },
+  "metadata": {
+    "progress": 66,
+    "currentState": "collecting_area"
+  }
+}

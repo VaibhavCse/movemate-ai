@@ -1,0 +1,29 @@
+# ==========================
+# FastAPI Framework
+# ==========================
+fastapi==0.116.1
+
+# ASGI Server
+uvicorn[standard]==0.35.0
+
+# Data Validation
+pydantic==2.11.7
+pydantic-settings==2.10.1
+
+# Environment Variables
+python-dotenv==1.1.1
+
+# Logging
+python-json-logger==3.3.0
+
+# HTTP Client
+httpx==0.28.1
+
+# ==========================
+# AI / LangChain
+# ==========================
+
+langchain==0.3.27
+langgraph==0.6.6
+langchain-google-genai==2.1.9
+langsmith==0.4.14
