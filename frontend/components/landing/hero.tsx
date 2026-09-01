@@ -13,12 +13,22 @@ const container = {
 
 const item = {
   hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.6,
+      ease: "easeOut" as const,
+    },
+  },
 };
 
 export function Hero() {
   return (
-    <section id="top" className="relative overflow-hidden pt-40 pb-20 md:pt-48 md:pb-28">
+    <section
+      id="top"
+      className="relative overflow-hidden pt-40 pb-20 md:pt-48 md:pb-28"
+    >
       {/* Ambient glow behind the headline — the one intentional flourish */}
       <div
         aria-hidden="true"
