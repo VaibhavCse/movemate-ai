@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Check, Loader2, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ThinkingStep } from "@/types/chat";
@@ -13,30 +13,36 @@ const INITIAL_STEPS: ThinkingStep[] = [
   { id: "rank", label: "Ranking recommendations", done: false },
 ];
 
-/** How long each step stays "in progress" before completing, in ms. */
-const STEP_INTERVAL = 420;
+/**
+ * The animation progresses through the first three stages.
+ * The final stage stays active until the real API response arrives
+ * and the TypingIndicator component is unmounted.
+ */
+const STEP_INTERVALS = [900, 2200, 3000];
 
 export function TypingIndicator() {
   const [steps, setSteps] = useState<ThinkingStep[]>(INITIAL_STEPS);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   useEffect(() => {
-    let index = 0;
-    const timer = setInterval(() => {
-      setSteps((prev) => {
-        if (index >= prev.length) {
-          clearInterval(timer);
-          return prev;
-        }
-        const next = prev.map((step, i) => (i === index ? { ...step, done: true } : step));
-        index += 1;
-        return next;
-      });
-    }, STEP_INTERVAL);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
 
-    return () => clearInterval(timer);
-  }, []);
+    if (activeIndex < STEP_INTERVALS.length) {
+      timeout = setTimeout(() => {
+        setSteps((prev) =>
+          prev.map((step, index) =>
+            index === activeIndex ? { ...step, done: true } : step
+          )
+        );
 
-  const activeIndex = steps.findIndex((s) => !s.done);
+        setActiveIndex((prev) => prev + 1);
+      }, STEP_INTERVALS[activeIndex]);
+    }
+
+    return () => {
+      if (timeout) clearTimeout(timeout);
+    };
+  }, [activeIndex]);
 
   return (
     <motion.div
@@ -55,41 +61,49 @@ export function TypingIndicator() {
           <motion.span
             aria-hidden="true"
             animate={{ opacity: [0.2, 1, 0.2] }}
-            transition={{ duration: 1.2, repeat: Infinity, ease: "easeInOut" }}
+            transition={{
+              duration: 1.2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
           >
             ...
           </motion.span>
         </p>
 
         <ul className="flex flex-col gap-1.5">
-          <AnimatePresence initial={false}>
-            {steps.map((step, i) => {
-              const isActive = i === activeIndex;
-              const isPending = i > activeIndex && activeIndex !== -1;
+          {steps.map((step, i) => {
+            const isActive = i === activeIndex;
+            const isPending = i > activeIndex;
 
-              return (
-                <motion.li
-                  key={step.id}
-                  initial={{ opacity: 0, x: -6 }}
-                  animate={{ opacity: isPending ? 0.4 : 1, x: 0 }}
-                  transition={{ duration: 0.3 }}
-                  className={cn(
-                    "flex items-center gap-2 text-sm",
-                    step.done ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {step.done ? (
-                    <Check className="h-3.5 w-3.5 shrink-0 text-[color:var(--accent-sage)]" />
-                  ) : isActive ? (
-                    <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
-                  ) : (
-                    <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-border" />
-                  )}
-                  {step.label}
-                </motion.li>
-              );
-            })}
-          </AnimatePresence>
+            return (
+              <motion.li
+                key={step.id}
+                initial={{ opacity: 0, x: -6 }}
+                animate={{
+                  opacity: isPending ? 0.4 : 1,
+                  x: 0,
+                }}
+                transition={{ duration: 0.3 }}
+                className={cn(
+                  "flex items-center gap-2 text-sm",
+                  step.done
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                )}
+              >
+                {step.done ? (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-[color:var(--accent-sage)]" />
+                ) : isActive ? (
+                  <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
+                ) : (
+                  <span className="h-3.5 w-3.5 shrink-0 rounded-full border border-border" />
+                )}
+
+                {step.label}
+              </motion.li>
+            );
+          })}
         </ul>
       </div>
     </motion.div>

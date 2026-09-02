@@ -16,3 +16,9 @@ class SearchProviderError(MoveMateError):
     """
     Raised when a search provider fails.
     """
+
+
+class AIProviderError(MoveMateError):
+    """
+    Raised when the AI provider fails.
+    """
