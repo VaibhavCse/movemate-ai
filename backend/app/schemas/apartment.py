@@ -23,10 +23,20 @@ class ApartmentListing(BaseModel):
     source: str | None = None
     url: str
 
+
+class NearbyPlace(BaseModel):
+    name: str
+    url: str
+    description: str
+    source: str
+
+
 class ApartmentExtractionResponse(BaseModel):
     listings: list[ApartmentListing]
+
 
 class ApartmentSearchResponse(BaseModel):
     summary: str
     total_results: int
     listings: list[ApartmentListing]
+    nearby_places: list[NearbyPlace] = []

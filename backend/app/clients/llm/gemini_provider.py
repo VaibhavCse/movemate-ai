@@ -12,7 +12,7 @@ llm = ChatGoogleGenerativeAI(
     model="gemini-3.6-flash",
     google_api_key=settings.GOOGLE_API_KEY,
     temperature=0.3,
-    max_retries=0,
+    max_retries=1,
 )
 
 
