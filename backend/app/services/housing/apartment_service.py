@@ -166,6 +166,9 @@ class ApartmentService:
     ) -> str:
         """
         Build the Tavily query for apartment discovery.
+
+        The query explicitly asks for individual property listings
+        instead of generic real-estate category or collection pages.
         """
 
         parts = []
@@ -194,7 +197,12 @@ class ApartmentService:
         elif brokerage is True:
             parts.append("broker listings")
 
-        parts.append("rent")
+        # Important:
+        # Ask Tavily for actual individual property/listing pages.
+        # This reduces the chance of receiving generic category pages.
+        parts.append("individual property listing")
+
+        parts.append("available for rent")
 
         return " ".join(parts)
 
@@ -221,11 +229,6 @@ class ApartmentService:
                 f"Cult.fit gyms fitness centers near "
                 f"{normalized_location} Bangalore"
             )
-
-        return (
-            f"gyms fitness centers near "
-            f"{normalized_location} Bangalore"
-        )
 
         # ---------------------------------------------------------
         # General gym search
@@ -267,7 +270,6 @@ class ApartmentService:
 
         except Exception:
             # Gym discovery is an optional enhancement.
-
             # If the gym search fails, the apartment search should
             # still succeed normally.
             return []
@@ -519,6 +521,9 @@ class ApartmentService:
         """
         Convert Tavily apartment search results into the text
         consumed by the apartment extraction chain.
+
+        The exact Tavily URL is preserved so the extraction layer
+        can return the original source URL without modification.
         """
 
         if not response.results:
